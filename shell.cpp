@@ -1,8 +1,23 @@
 #include "shell.hpp"
 
+bool change_directory(std::vector<std::string>& args) {
+    if (args.size() < 2) {
+        return false;
+    }
+    if (chdir(args[1].c_str()) == 0) {
+        return true;
+    }
+    return false;
+}
 
 bool process(std::vector<std::string>& args) {
-    char** cargs = new char*[args.size()];
+    if (args.empty()) {
+        return true;
+    }
+    if (args[0] == "cd") {
+        return change_directory(args);
+    } 
+    char** cargs = new char*[args.size() + 1];
 
     for (size_t i = 0; i<args.size(); i++) {
         cargs[i] = new char[args[i].size()+1];
@@ -19,7 +34,7 @@ bool process(std::vector<std::string>& args) {
         // child
         execvp(cargs[0], cargs);
         std::cerr << "Exec failed!" << std::endl;
-        return false;
+        _exit(1);
     } else {
         wait(NULL);
     }
