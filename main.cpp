@@ -1,6 +1,12 @@
 #include "shell.hpp"
 #include <cstdlib>
 
+
+std::string get_directory() {
+    char* direc = get_current_dir_name();
+    return std::string(direc);
+}
+
 std::string getwhoami() {
     const char* user = getlogin();
     if (user == nullptr) {
@@ -12,7 +18,7 @@ std::string getwhoami() {
 int main() {
     while (true) {
         std::string line;
-        std::cout << getwhoami() << ":$ ";
+        std::cout << getwhoami() << ":" << get_directory() << "$ ";
         if (!std::getline(std::cin, line)) {
             break;
         }
