@@ -1,10 +1,19 @@
 #include "shell.hpp"
 #include <cstdlib>
 
+std::string getwhoami();
+std::string get_directory();
+
 
 std::string get_directory() {
     char* direc = get_current_dir_name();
-    return std::string(direc);
+    std::string direcs = std::string(direc);
+    std::string tilde = "~";
+    std::string test_against = "/home/"+getwhoami(); 
+    if (direcs.find(test_against) != std::string::npos) {
+        direcs.replace(0, test_against.size(), tilde);
+    }
+    return direcs;
 }
 
 std::string getwhoami() {
