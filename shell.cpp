@@ -10,6 +10,60 @@ bool change_directory(std::vector<std::string>& args) {
     return false;
 }
 
+bool redirect(std::vector<std::vector<std::string>> pipeargs, REDIRECTION rd) {
+    char** command = convert_for_exec(pipeargs[0]);
+    char** filename = convert_for_exec(pipeargs[1]);
+    pid_t p1;
+    if (rd == OUTPUT) {
+        p1 = fork();
+        if (p1 < 0) {
+            std::cout<< "Fork failed while redirecting output";
+        } else if (p1 == 0) {
+            // child
+            int fd = open(filename[0], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (fd < 0) {
+                std::cout<< "Failed to open file for output";
+                return false;
+            }
+            dup2(fd, STDOUT_FILENO);
+            close(fd);
+            if (execvp(command[0], command) < 0) {
+                std::cout << "Exec failed while redirecting output";
+                exit(1);
+            }
+        } else {
+            wait(NULL);
+        }
+        delete_clist(command, pipeargs[0].size());
+        delete_clist(filename, pipeargs[1].size());
+        return true;
+    } else if (rd == INPUT) {
+        p1 = fork();
+        if (p1 < 0) {
+            std::cout<< "Fork failed while redirecting input";
+        } else if (p1 == 0) {
+            // child
+            int fd = open(filename[0], O_RDONLY, 0644);
+            if (fd < 0) {
+                std::cout<< "Failed to open file for input";
+                return false;
+            }
+            dup2(fd, STDIN_FILENO);
+            close(fd);
+            if (execvp(command[0], command) < 0) {
+                std::cout << "Exec failed while redirecting input";
+                exit(1);
+            }
+        } else {
+            wait(NULL);
+        }
+        delete_clist(command, pipeargs[0].size());
+        delete_clist(filename, pipeargs[1].size());
+        return true;
+    }
+    return false;
+}
+
 bool pipe_process(std::vector<std::vector<std::string>> pipeargs) {
     int fd[2];
     pid_t p1, p2;
@@ -94,12 +148,22 @@ bool process(std::vector<std::string>& args) {
 
     std::vector<std::vector<std::string>> pipeargs;
     std::vector<std::string> internal;
+    REDIRECTION rd;
 
     for (std::string arg : args) {
-        if (arg != "|") {
+        if (arg != "|" && arg != "<" && arg != ">") {
             internal.push_back(arg);
         }
         if (arg == "|") {
+            rd = PIPE;
+            pipeargs.push_back(internal);
+            internal.clear();
+        } else if (arg == "<") {
+            rd = INPUT;
+            pipeargs.push_back(internal);
+            internal.clear();
+        } else if (arg == ">") {
+            rd = OUTPUT;
             pipeargs.push_back(internal);
             internal.clear();
         }
@@ -107,7 +171,17 @@ bool process(std::vector<std::string>& args) {
     pipeargs.push_back(internal);
 
     if (pipeargs.size() > 1) {
-        return pipe_process(pipeargs);
+        switch(rd) {
+            case PIPE:
+                return pipe_process(pipeargs);
+                break;
+            case OUTPUT:
+                return redirect(pipeargs, OUTPUT);
+                break;
+            case INPUT:
+                return redirect(pipeargs, INPUT);
+                break;
+        }
     }
 
     char** cargs = convert_for_exec(args);
