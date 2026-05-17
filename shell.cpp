@@ -4,6 +4,9 @@ bool change_directory(std::vector<std::string>& args) {
     if (args.size() < 2) {
         return false;
     }
+    if (args[1] == "~") {
+        args[1] = "/home/"+getwhoami();
+    }
     if (chdir(args[1].c_str()) == 0) {
         return true;
     }

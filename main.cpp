@@ -1,10 +1,6 @@
 #include "shell.hpp"
 #include <cstdlib>
 
-std::string getwhoami();
-std::string get_directory();
-
-
 std::string get_directory() {
     char* direc = get_current_dir_name();
     std::string direcs = std::string(direc);

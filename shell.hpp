@@ -11,6 +11,8 @@
 
 typedef enum REDIRECTION {PIPE, OUTPUT, INPUT} REDIRECTION;
 
+std::string getwhoami();
+std::string get_directory();
 std::vector<std::string> split(std::string line);
 bool process(std::vector<std::string>& tokens);
 char** convert_for_exec(std::vector<std::string>& args);
