@@ -12,7 +12,7 @@ Run using:
 
 Some things I'll fix pretty soon:
 
--> Input & output redirection cannot stack into more than 1 command at a time
+-> Input & output redirection cannot stack into more than 1 command at a time <br>
 -> Piping cannot stack into more than 1 command at a time
 
 (Eg: ls > a.txt works, but ls > a.txt > b.txt doesn't)
