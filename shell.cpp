@@ -1,11 +1,13 @@
 #include "shell.hpp"
 
-bool change_directory(std::vector<std::string>& args) {
+bool change_directory(std::vector<std::string>& args, PLATFORM pt) {
     if (args.size() < 2) {
         return false;
     }
-    if (args[1] == "~") {
+    if (args[1] == "~" && pt == LINUX) {
         args[1] = "/home/"+getwhoami();
+    } else if (args[1] == "~" && pt == MACOS) {
+        args[1]="/Users/"+getwhoami();
     }
     if (chdir(args[1].c_str()) == 0) {
         return true;
@@ -141,12 +143,12 @@ void delete_clist(char** cargs, size_t sz) {
     delete[] cargs;
 }
 
-bool process(std::vector<std::string>& args) {
+bool process(std::vector<std::string>& args, PLATFORM pt) {
     if (args.empty()) {
         return true;
     }
     if (args[0] == "cd") {
-        return change_directory(args);
+        return change_directory(args, pt);
     } 
 
     std::vector<std::vector<std::string>> pipeargs;

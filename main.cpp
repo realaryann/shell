@@ -1,15 +1,25 @@
 #include "shell.hpp"
 #include <cstdlib>
 
+PLATFORM pt;
+
 std::string get_directory() {
-    char* direc = get_current_dir_name();
-    std::string direcs = std::string(direc);
-    std::string tilde = "~";
-    std::string test_against = "/home/"+getwhoami(); 
-    if (direcs.find(test_against) != std::string::npos) {
-        direcs.replace(0, test_against.size(), tilde);
+    char direc[PATH_MAX];
+    if (getcwd(direc, sizeof(direc)) != NULL) {
+        std::string direcs = std::string(direc);
+        std::string tilde = "~";
+        std::string test_against = "/home/"+getwhoami(); 
+        std::string test_against1 = "/Users/"+getwhoami();
+        if (direcs.find(test_against) != std::string::npos)  {
+            direcs.replace(0, test_against.size(), tilde);
+            pt = LINUX;
+        } else if (direcs.find(test_against1) != std::string::npos) {
+            direcs.replace(0, test_against1.size(), tilde);
+            pt = MACOS;
+        }
+        return direcs;
     }
-    return direcs;
+    return "";
 }
 
 std::string getwhoami() {
@@ -28,7 +38,7 @@ int main() {
             break;
         }
         std::vector<std::string> tokens = split(line);
-        process(tokens);
+        process(tokens, pt);
         
     }
 }
