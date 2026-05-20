@@ -150,6 +150,7 @@ bool process(std::vector<std::vector<std::string>>& args, PLATFORM pt) {
         }
         if (args[i][0] == "cd") {
             change_directory(args[i], pt);
+            continue;
         } 
 
         std::vector<std::vector<std::string>> pipeargs;
