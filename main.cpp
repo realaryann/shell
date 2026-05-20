@@ -38,7 +38,8 @@ int main() {
             break;
         }
         std::vector<std::string> tokens = split(line);
-        process(tokens, pt);
+        std::vector<std::vector<std::string>> cond_tokens = split_conditionals(tokens);
+        process(cond_tokens, pt);
         
     }
 }

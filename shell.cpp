@@ -143,70 +143,88 @@ void delete_clist(char** cargs, size_t sz) {
     delete[] cargs;
 }
 
-bool process(std::vector<std::string>& args, PLATFORM pt) {
-    if (args.empty()) {
-        return true;
-    }
-    if (args[0] == "cd") {
-        return change_directory(args, pt);
-    } 
-
-    std::vector<std::vector<std::string>> pipeargs;
-    std::vector<std::string> internal;
-    REDIRECTION rd;
-
-    for (std::string arg : args) {
-        if (arg != "|" && arg != "<" && arg != ">") {
-            internal.push_back(arg);
+bool process(std::vector<std::vector<std::string>>& args, PLATFORM pt) {
+    for(int i = 0; i<args.size(); i++) {
+        if (args[i].empty()) {
+            continue;
         }
-        if (arg == "|") {
-            rd = PIPE;
-            pipeargs.push_back(internal);
-            internal.clear();
-        } else if (arg == "<") {
-            rd = INPUT;
-            pipeargs.push_back(internal);
-            internal.clear();
-        } else if (arg == ">") {
-            rd = OUTPUT;
-            pipeargs.push_back(internal);
-            internal.clear();
+        if (args[i][0] == "cd") {
+            change_directory(args[i], pt);
+        } 
+
+        std::vector<std::vector<std::string>> pipeargs;
+        std::vector<std::string> internal;
+        REDIRECTION rd;
+
+        for (std::string arg : args[i]) {
+            if (arg != "|" && arg != "<" && arg != ">") {
+                internal.push_back(arg);
+            }
+            if (arg == "|") {
+                rd = PIPE;
+                pipeargs.push_back(internal);
+                internal.clear();
+            } else if (arg == "<") {
+                rd = INPUT;
+                pipeargs.push_back(internal);
+                internal.clear();
+            } else if (arg == ">") {
+                rd = OUTPUT;
+                pipeargs.push_back(internal);
+                internal.clear();
+            }
         }
-    }
-    pipeargs.push_back(internal);
+        pipeargs.push_back(internal);
 
-    if (pipeargs.size() > 1) {
-        switch(rd) {
-            case PIPE:
-                return pipe_process(pipeargs);
-                break;
-            case OUTPUT:
-                return redirect(pipeargs, OUTPUT);
-                break;
-            case INPUT:
-                return redirect(pipeargs, INPUT);
-                break;
+        if (pipeargs.size() > 1) {
+            switch(rd) {
+                case PIPE:
+                    pipe_process(pipeargs);
+                    continue;
+                case OUTPUT:
+                    redirect(pipeargs, OUTPUT);
+                    continue;
+                case INPUT:
+                    redirect(pipeargs, INPUT);
+                    continue;
+            }
         }
-    }
 
-    char** cargs = convert_for_exec(args);
-    // run ls
+        char** cargs = convert_for_exec(args[i]);
+        // run ls
 
-    pid_t pid = fork();
-    if (pid < 0) {
-        std::cout << "Fork for ls failed";
-        return false;
-    } else if (pid == 0) {
-        // child
-        execvp(cargs[0], cargs);
-        std::cerr << "Exec failed!" << std::endl;
-        _exit(1);
-    } else {
-        wait(NULL);
+        pid_t pid = fork();
+        if (pid < 0) {
+            std::cout << "Fork for ls failed";
+            continue;
+        } else if (pid == 0) {
+            // child
+            execvp(cargs[0], cargs);
+            std::cerr << "Exec failed!" << std::endl;
+            exit(1);
+        } else {
+            wait(NULL);
+        }
+        
+        delete_clist(cargs, args[i].size());
     }
-    
-    delete_clist(cargs, args.size());
     return true;
+}
+
+std::vector<std::vector<std::string>> split_conditionals(std::vector<std::string> tokens) {
+    std::vector<std::string> inner;
+    std::vector<std::vector<std::string>> res;
+
+    for (std::string str : tokens) {
+        if (str == "&&") {
+            res.push_back(inner);
+            inner.clear();
+        } else {
+            inner.push_back(str);
+        }
+    }
+    res.push_back(inner);
+    return res;
 }
 
 std::vector<std::string> split(std::string line) {
